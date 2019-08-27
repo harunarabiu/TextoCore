@@ -1,15 +1,20 @@
 import os
 import requests
 
+from django.utils.datastructures import MultiValueDictKeyError
+from requests.exceptions import ConnectionError
 
 from django.contrib.auth.models import User
 from django.shortcuts import render, HttpResponse, HttpResponse, Http404
 from django.http import JsonResponse
 from django.conf import settings
 from .models import Message, Response
+from account.models import Account, AuthToken
 
 
 # Create your views here.
+LOW_BALANCE = 2
+USER = None
 
 
 def entry(request):
@@ -36,10 +41,19 @@ def entry(request):
             return JsonResponse({'missing': str(missing_keys)})
         else:
             print('all keys are valid')
-        print(os.environ.get('SMS_SEND_ENPOINT'))
 
-        ### AUTHENTICATE TOKEN ###
-        token = request.GET['token']
+        ### AUTHENTICATE TOKEN && CHECK BALANCE###
+        try:
+            _token = request.GET['token']
+            token = AuthToken.objects.get(token=_token)
+            if not token.is_active:
+                return JsonResponse({'error': "Invalid Token"})
+            print("Token:" + token.token)
+        except MultiValueDictKeyError:
+            return JsonResponse({'error': "Token is Missing"})
+        except AuthToken.DoesNotExist:
+            return JsonResponse({'error': "Invalid Token"})
+
         ### CHECK BALANCE ###
 
         ### SEND MESSAGE ###
@@ -50,7 +64,7 @@ def entry(request):
         msg_type = request.GET['type']
         dlr = request.GET['dlr']
 
-        sms = SMS(sender=sender, recipients=to,
+        sms = SMS(user=token.user, sender=sender, recipients=to,
                   message=message, msg_type=msg_type)
         sms.send()
 
@@ -64,15 +78,15 @@ def entry(request):
 
 class SMS():
 
-    def __init__(self, sender=None, recipients=None, message=None, msg_type='Text'):
+    def __init__(self, user=None, sender=None, recipients=None, message=None, msg_type='Text'):
         self.sender = sender.strip()
         self.recipients = recipients
         self.message = message.strip()
         self.response = None
         self.msg_type = 0 if msg_type == 'Text' else 1
 
-        self.Message = None
-
+        self.MESSAGE = None
+        self.USER = user
         self.NUMBERS_SENT = []
         self.NUMBERS_SENT_DND = []
         self.NUMBERS_ON_DND = []
@@ -82,20 +96,23 @@ class SMS():
         print(self.sender, self.recipients, self.message, self.msg_type)
 
     def send(self):
-        endpoint = settings.SMS_SEND_API + "source={sender}&destination={recipients}&type=1&message={message}&dlr={msg_type}".format(
-            sender=self.sender, recipients=self.recipients, message=self.message, msg_type=self.msg_type)
-        query = requests.get(endpoint)
-        if query.status_code == 200:
+        try:
+            endpoint = settings.SMS_SEND_API + "source={sender}&destination={recipients}&type=1&message={message}&dlr={msg_type}".format(
+                sender=self.sender, recipients=self.recipients, message=self.message, msg_type=self.msg_type)
+            query = requests.get(endpoint)
+            if query.status_code == 200:
 
-            # Saving Message to DB
-            user = User.objects.get(pk=1)
-            self.Message = Message.objects.create(msg_user=user, msg_sender=self.sender, msg_destination=self.recipients,
-                                                  msg_message=self.message, msg_cost=self.cost(), msg_type=self.msg_type)
+                # Saving Message to DB
+                user = User.objects.get(pk=1)
+                self.MESSAGE = Message.objects.create(msg_user=self.USER, msg_sender=self.sender, msg_destination=self.recipients,
+                                                      msg_message=self.message, msg_cost=self.cost(), msg_type=self.msg_type)
 
-            response = query.text.strip()
-            self.response = response
+                response = query.text.strip()
+                self.response = response
 
-        self.handle_bulk_response()
+            self.handle_bulk_response()
+        except ConnectionError:
+            print("error: Can't Connect to GateAway")
 
     def handle_bulk_response(self):
         responses = self.response.split(',')
@@ -112,7 +129,7 @@ class SMS():
                 if int(status) == 1701:
                     self.NUMBERS_SENT.append(phone)
                     Response.objects.create(
-                        message=self.Message, phone_number=phone, msg_id=msg_id, response_code=status)
+                        message=self.MESSAGE, phone_number=phone, msg_id=msg_id, response_code=status)
 
             elif len(content) == 2:
                 status = content[0]

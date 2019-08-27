@@ -8,7 +8,7 @@ User = settings.AUTH_USER_MODEL
 
 
 class Message(models.Model):
-    msg_user = models.OneToOneField(
+    msg_user = models.ForeignKey(
         User, on_delete=models.CASCADE)
     msg_sender = models.CharField(max_length=11)
     msg_destination = models.TextField()

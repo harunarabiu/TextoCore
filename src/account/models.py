@@ -21,9 +21,13 @@ class Account(models.Model):
 
 
 class AuthToken(models.Model):
+    # TODO: Change user = models.OneToOneField to ForeignKey
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.token
 
 
 ### Signals ###
