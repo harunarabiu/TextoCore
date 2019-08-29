@@ -55,7 +55,7 @@ def entry(request):
             return JsonResponse({'error': "Invalid Token"})
 
         ### CHECK BALANCE ###
-
+        check_balance(user=USER)
         ### SEND MESSAGE ###
 
         sender = request.GET['sender']
@@ -66,6 +66,7 @@ def entry(request):
 
         sms = SMS(user=token.user, sender=sender, recipients=to,
                   message=message, msg_type=msg_type)
+
         sms.send()
 
         print("cost: {} pages: {} total Numbers: {}".format(
@@ -74,6 +75,20 @@ def entry(request):
 
     else:
         return Http404()
+
+
+def check_balance(user=None):
+    try:
+        account = Account.objects.get(user=user)
+
+        if account.balance > 2:
+            return account.balance
+        else:
+            return 0
+        print("current balance:" + str(account.balance))
+
+    except Account.DoesNotExist:
+        print("couldn't get Account")
 
 
 class SMS():
