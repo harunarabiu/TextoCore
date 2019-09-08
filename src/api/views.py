@@ -54,10 +54,6 @@ def entry(request):
         except AuthToken.DoesNotExist:
             return JsonResponse({'error': "Invalid Token"})
 
-        ### CHECK BALANCE ###
-        check_balance(user=USER)
-        ### SEND MESSAGE ###
-
         sender = request.GET['sender']
         message = request.GET['message']
         to = request.GET['to']
@@ -67,7 +63,14 @@ def entry(request):
         sms = SMS(user=token.user, sender=sender, recipients=to,
                   message=message, msg_type=msg_type)
 
-        sms.send()
+        ### CHECK BALANCE ###
+        msg_estimated_cost = sms.cost()
+        user_balance = account_balance(user=sms.USER)
+        if user_balance > msg_estimated_cost:
+            sms.send()
+        else:
+            return JsonResponse({'error': "Insuffient Account Balance."})
+        ### SEND MESSAGE ###
 
         print("cost: {} pages: {} total Numbers: {}".format(
             sms.cost(),  sms.pages(), sms.total_sent()))
@@ -77,7 +80,7 @@ def entry(request):
         return Http404()
 
 
-def check_balance(user=None):
+def account_balance(user=None):
     try:
         account = Account.objects.get(user=user)
 
@@ -107,6 +110,10 @@ class SMS():
         self.NUMBERS_ON_DND = []
         self.NUMBERS_INVALID = []
         self.REPONSES = []
+        self.SENT = False
+
+        self.STATUS_CODE = None
+        self.NO_RECIPIENTS = 0
 
         print(self.sender, self.recipients, self.message, self.msg_type)
 
@@ -124,8 +131,8 @@ class SMS():
 
                 response = query.text.strip()
                 self.response = response
-
             self.handle_bulk_response()
+
         except ConnectionError:
             print("error: Can't Connect to GateAway")
 
@@ -164,6 +171,11 @@ class SMS():
 
         return int(total)
 
+    def total_recipients(self):
+        recipients = self.recipients.split(",")
+        total_recipients = len(recipients)
+        return total_recipients
+
     def pages(self):
         count = len(self.message)/160 if (len(self.message) %
                                           160) == 0 else int(len(self.message)/160) + 1
@@ -171,8 +183,11 @@ class SMS():
 
     def cost(self):
         pages = self.pages()
-        print(pages)
-        cost = pages * 1.85 * self.total_sent()
+        no_recipients = self.total_sent() if self.SENT else self.total_recipients()
+
+        print("cost-> pages:" + str(pages) +
+              "recipients:" + str(no_recipients))
+        cost = pages * 1.85 * no_recipients
 
         return cost
 
