@@ -22,7 +22,6 @@ def entry(request):
     if request.method == "GET":
 
         required_keys = ['token', 'sender', 'message', 'to', 'type', 'dlr']
-        received_key = []
 
         # valid indidual key
         #### check keys with empty values ####
@@ -80,6 +79,10 @@ def entry(request):
         return Http404()
 
 
+def TokenAuth(request):
+    pass
+
+
 def account_balance(user=None):
     try:
         account = Account.objects.get(user=user)
@@ -110,10 +113,21 @@ class SMS():
         self.NUMBERS_ON_DND = []
         self.NUMBERS_INVALID = []
         self.REPONSES = []
-        self.SENT = False
 
+        self.SENT = False
+        self.STATUS_MESSAGE = None
         self.STATUS_CODE = None
+
+        self.COST = self.cost()
+
         self.NO_RECIPIENTS = 0
+
+        self.FINAL_RESPONSE = {
+            "status_code": self.STATUS_CODE,
+            "status_message": self.STATUS_MESSAGE,
+            "price": self.COST,
+            "results": []
+        }
 
         print(self.sender, self.recipients, self.message, self.msg_type)
 
@@ -124,42 +138,92 @@ class SMS():
             query = requests.get(endpoint)
             if query.status_code == 200:
 
+                response = query.text.strip()
+                self.response = response
+
                 # Saving Message to DB
                 user = User.objects.get(pk=1)
                 self.MESSAGE = Message.objects.create(msg_user=self.USER, msg_sender=self.sender, msg_destination=self.recipients,
                                                       msg_message=self.message, msg_cost=self.cost(), msg_type=self.msg_type)
 
-                response = query.text.strip()
-                self.response = response
             self.handle_bulk_response()
+
+            """
+
+                {
+                    "status_code": 100,
+                    "status_message": "sent successfully",
+                    "price": "5.8",
+                    "result": [
+                        {
+                            "sender": "HMAX",
+                            "message": "Hello World",
+                            "to": "2348189931773",
+                            "msg_status": "SENT|DELIVERED|DND",
+                            "msg_id": "f8fb22cc-d701-44b4-87d1-9f401ea3ca90"
+                        }
+                    ]
+                }
+            """
 
         except ConnectionError:
             print("error: Can't Connect to GateAway")
 
     def handle_bulk_response(self):
+        """
+            SAMPLE RESPONSE
+            1701|2348189931773|f8fb22cc-d701-44b4-87d1-9f401ea3ca90,1701|2348189931773|1a5c4dfb-6695-45ad-9a2a-c084d053f031
+        """
+
         responses = self.response.split(',')
 
         for response in responses:
 
             content = response.split('|')
             if len(content) == 3:
+                # Change "self.SENT status to True"
+                self.SENT = True
+
                 status = content[0]
                 phone = content[1]
                 msg_id = content[2]
+
                 print(status, phone, msg_id)
 
                 if int(status) == 1701:
+                    response_ = {
+                        "sender": self.sender,
+                        "message": self.message,
+                        "to": phone,
+                        "msg_status": "SENT",
+                        "msg_id": msg_id
+                    }
+
+                    self.FINAL_RESPONSE["result"].append(response)
+
                     self.NUMBERS_SENT.append(phone)
+
+                    # Save response to DB
                     Response.objects.create(
                         message=self.MESSAGE, phone_number=phone, msg_id=msg_id, response_code=status)
+
+            # "if len(content) == 2" the response is error
 
             elif len(content) == 2:
                 status = content[0]
                 phone = content[1]
                 if status == '1032':
                     self.NUMBERS_ON_DND.append(phone)
-                if status == '1706':
+                elif status == '1706':
                     self.NUMBERS_INVALID.append(phone)
+                elif status == '1710':
+                    print("Internal error.")
+                elif status == '1025':
+                    print("Insufficient credit.")
+                elif status == '1715':
+                    print("Response timeout.")
+                elif status == '1028':
+                    print("Spam message.")
             else:
                 print(content)
 
