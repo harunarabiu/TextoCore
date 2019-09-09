@@ -22,6 +22,7 @@ def entry(request):
     if request.method == "GET":
 
         required_keys = ['token', 'sender', 'message', 'to', 'type', 'dlr']
+        received_key = []
 
         # valid indidual key
         #### check keys with empty values ####
@@ -97,6 +98,28 @@ def account_balance(user=None):
         print("couldn't get Account")
 
 
+def deduct_unit(user=None, unit=0):
+    try:
+        account = Account.objects.get(user=user)
+        if account.balance >= unit:
+            old_balance = account.balance
+            new_balance = account.balance - unit
+            #update
+            account.balance = new_balance
+            account.book_balance = old_balance
+            account.save()
+            print(f'old balance: {old_balance} new_balance: {new_balance}')
+        else:
+            print("insuffient balance")
+            return 0
+
+            
+
+    except Account.DoesNotExist:
+        print("couldn't get Account")
+
+
+
 class SMS():
 
     def __init__(self, user=None, sender=None, recipients=None, message=None, msg_type='Text'):
@@ -146,25 +169,29 @@ class SMS():
                 self.MESSAGE = Message.objects.create(msg_user=self.USER, msg_sender=self.sender, msg_destination=self.recipients,
                                                       msg_message=self.message, msg_cost=self.cost(), msg_type=self.msg_type)
 
-            self.handle_bulk_response()
+                self.handle_bulk_response()
 
-            """
+                #Deduct SMS charge from Account
 
-                {
-                    "status_code": 100,
-                    "status_message": "sent successfully",
-                    "price": "5.8",
-                    "result": [
-                        {
-                            "sender": "HMAX",
-                            "message": "Hello World",
-                            "to": "2348189931773",
-                            "msg_status": "SENT|DELIVERED|DND",
-                            "msg_id": "f8fb22cc-d701-44b4-87d1-9f401ea3ca90"
-                        }
-                    ]
-                }
-            """
+                deduct_unit(user=self.USER, unit=self.COST)
+
+                """
+
+                    {
+                        "status_code": 100,
+                        "status_message": "sent successfully",
+                        "price": "5.8",
+                        "result": [
+                            {
+                                "sender": "HMAX",
+                                "message": "Hello World",
+                                "to": "2348189931773",
+                                "msg_status": "SENT|DELIVERED|DND",
+                                "msg_id": "f8fb22cc-d701-44b4-87d1-9f401ea3ca90"
+                            }
+                        ]
+                    }
+                """
 
         except ConnectionError:
             print("error: Can't Connect to GateAway")
@@ -199,10 +226,10 @@ class SMS():
                         "msg_id": msg_id
                     }
 
-                    self.FINAL_RESPONSE["result"].append(response)
+                    self.FINAL_RESPONSE["results"].append(response_)
 
                     self.NUMBERS_SENT.append(phone)
-
+                    print(self.FINAL_RESPONSE)
                     # Save response to DB
                     Response.objects.create(
                         message=self.MESSAGE, phone_number=phone, msg_id=msg_id, response_code=status)
