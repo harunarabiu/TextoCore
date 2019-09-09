@@ -104,13 +104,13 @@ def deduct_unit(user=None, unit=0):
         if account.balance >= unit:
             old_balance = account.balance
             new_balance = account.balance - unit
-            #update
+            #update DB
             account.balance = new_balance
             account.book_balance = old_balance
             account.save()
-            print(f'old balance: {old_balance} new_balance: {new_balance}')
+
         else:
-            print("insuffient balance")
+            raise Exception("Insuffient Balance.")
             return 0
 
             
@@ -146,8 +146,9 @@ class SMS():
         self.NO_RECIPIENTS = 0
 
         self.FINAL_RESPONSE = {
-            "status_code": self.STATUS_CODE,
-            "status_message": self.STATUS_MESSAGE,
+            "ok": true,
+            "error_code": self.STATUS_CODE,
+            "error_message": self.STATUS_MESSAGE,
             "price": self.COST,
             "results": []
         }
@@ -178,8 +179,9 @@ class SMS():
                 """
 
                     {
-                        "status_code": 100,
-                        "status_message": "sent successfully",
+                        "ok": True,
+                        "error_code": None,
+                        "error_message": None,
                         "price": "5.8",
                         "result": [
                             {
