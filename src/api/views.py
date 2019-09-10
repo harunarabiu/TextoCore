@@ -5,7 +5,11 @@ from django.utils.datastructures import MultiValueDictKeyError
 from requests.exceptions import ConnectionError
 
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+
 from django.shortcuts import render, HttpResponse, HttpResponse, Http404
+from django.views.decorators.csrf import csrf_exempt
+
 from django.http import JsonResponse
 from django.conf import settings
 from .models import Message, Response
@@ -74,14 +78,49 @@ def entry(request):
 
         print("cost: {} pages: {} total Numbers: {}".format(
             sms.cost(),  sms.pages(), sms.total_sent()))
-        return HttpResponse("hellow")
+        return JsonResponse(sms.FINAL_RESPONSE)
 
     else:
         return Http404()
 
 
-def TokenAuth(request):
-    pass
+@csrf_exempt
+def UserAuth(request):
+    if request.method == "POST":
+        username = request.POST.get("username", False)
+        password = request.POST.get("password", False)
+
+        if username and password:
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+                account = AuthToken.objects.get(user=user, is_active=True)
+                token = account.token
+                response = {
+                    "ok": True,
+                    "token": token
+                }
+
+                return JsonResponse(response)
+            else:
+                response = {
+                    "ok": False,
+                    "error_code": 105,
+                    "error_message": "Invalid User Credentials."
+                }
+
+                return JsonResponse(response)
+        else:
+            response = {
+                "ok": False,
+                "error_code": 105,
+                "error_message": "Username or Password is Missing."
+            }
+
+            return JsonResponse(response)
+
+    else:
+        raise Http404()
 
 
 def account_balance(user=None):
@@ -104,7 +143,7 @@ def deduct_unit(user=None, unit=0):
         if account.balance >= unit:
             old_balance = account.balance
             new_balance = account.balance - unit
-            #update DB
+            # update DB
             account.balance = new_balance
             account.book_balance = old_balance
             account.save()
@@ -113,11 +152,8 @@ def deduct_unit(user=None, unit=0):
             raise Exception("Insuffient Balance.")
             return 0
 
-            
-
     except Account.DoesNotExist:
         print("couldn't get Account")
-
 
 
 class SMS():
@@ -146,9 +182,11 @@ class SMS():
         self.NO_RECIPIENTS = 0
 
         self.FINAL_RESPONSE = {
-            "ok": true,
+            "ok": True,
             "error_code": self.STATUS_CODE,
             "error_message": self.STATUS_MESSAGE,
+            "sender": self.sender,
+            "message": self.message,
             "price": self.COST,
             "results": []
         }
@@ -172,7 +210,7 @@ class SMS():
 
                 self.handle_bulk_response()
 
-                #Deduct SMS charge from Account
+                # Deduct SMS charge from Account
 
                 deduct_unit(user=self.USER, unit=self.COST)
 
@@ -182,11 +220,11 @@ class SMS():
                         "ok": True,
                         "error_code": None,
                         "error_message": None,
+                        "sender": "HMAX",
+                        "message": "Hello World",
                         "price": "5.8",
                         "result": [
                             {
-                                "sender": "HMAX",
-                                "message": "Hello World",
                                 "to": "2348189931773",
                                 "msg_status": "SENT|DELIVERED|DND",
                                 "msg_id": "f8fb22cc-d701-44b4-87d1-9f401ea3ca90"
@@ -196,7 +234,7 @@ class SMS():
                 """
 
         except ConnectionError:
-            print("error: Can't Connect to GateAway")
+            raise Exception("error: Can't Connect to GateAway")
 
     def handle_bulk_response(self):
         """
@@ -221,8 +259,6 @@ class SMS():
 
                 if int(status) == 1701:
                     response_ = {
-                        "sender": self.sender,
-                        "message": self.message,
                         "to": phone,
                         "msg_status": "SENT",
                         "msg_id": msg_id
@@ -242,17 +278,29 @@ class SMS():
                 status = content[0]
                 phone = content[1]
                 if status == '1032':
+                    response_ = {
+                        "to": phone,
+                        "msg_status": "ON_DND",
+                    }
+                    self.FINAL_RESPONSE["results"].append(response_)
+
                     self.NUMBERS_ON_DND.append(phone)
                 elif status == '1706':
+                    response_ = {
+
+                        "to": phone,
+                        "msg_status": "INVALID_NO",
+                    }
+                    self.FINAL_RESPONSE["results"].append(response_)
                     self.NUMBERS_INVALID.append(phone)
                 elif status == '1710':
-                    print("Internal error.")
+                    raise Exception("Internal error.")
                 elif status == '1025':
-                    print("Insufficient credit.")
+                    raise Exception("Insufficient credit.")
                 elif status == '1715':
-                    print("Response timeout.")
+                    raise Exception("Response timeout.")
                 elif status == '1028':
-                    print("Spam message.")
+                    raise Exception("Spam message.")
             else:
                 print(content)
 
@@ -277,9 +325,6 @@ class SMS():
     def cost(self):
         pages = self.pages()
         no_recipients = self.total_sent() if self.SENT else self.total_recipients()
-
-        print("cost-> pages:" + str(pages) +
-              "recipients:" + str(no_recipients))
         cost = pages * 1.85 * no_recipients
 
         return cost
