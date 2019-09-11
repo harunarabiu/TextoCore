@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import logging
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -145,3 +146,18 @@ SMS_BALANCE_API = ("{}?username={}&password={}").format(
     SMS_BALANCE_ENPOINT, SMS_USERNAME, SMS_PASSWORD)
 SMS_SEND_API = ("{}?username={}&password={}&").format(
     SMS_SEND_ENPOINT, SMS_USERNAME, SMS_PASSWORD)
+
+
+# logging Config
+
+
+fmtstr = "%(asctime)s: %(levelname)s: %(filename)s:%(funcName)s Line:%(lineno)d %(message)s "
+datestr = "%a %m/%d/%Y %I:%M:%S %p"
+
+logging.basicConfig(
+    filename=os.path.join(BASE_DIR, 'app.log'),
+    level=logging.DEBUG,
+    filemode="a",
+    format=fmtstr,
+    datefmt=datestr
+)

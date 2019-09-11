@@ -1,5 +1,7 @@
 import os
+import logging
 import requests
+
 
 from django.utils.datastructures import MultiValueDictKeyError
 from requests.exceptions import ConnectionError
@@ -44,7 +46,7 @@ def entry(request):
         if missing_keys is set():
             return JsonResponse({'missing': str(missing_keys)})
         else:
-            print('all keys are valid')
+            logging.info('all keys are valid')
 
         ### AUTHENTICATE TOKEN && CHECK BALANCE###
         try:
