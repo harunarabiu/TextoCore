@@ -1,6 +1,0 @@
-Wed 09/11/2019 12:11:49 PM: INFO: autoreload.py:run_with_reloader Line:597 Watching for file changes with StatReloader 
-Wed 09/11/2019 12:12:01 PM: INFO: autoreload.py:trigger_reload Line:217 /mnt/c/SANDBOX_LINUX/textoCORE/src/TextoCore/settings.py changed, reloading. 
-Wed 09/11/2019 12:12:03 PM: INFO: autoreload.py:run_with_reloader Line:597 Watching for file changes with StatReloader 
-Wed 09/11/2019 12:12:09 PM: INFO: views.py:entry Line:49 all keys are valid 
-Wed 09/11/2019 12:12:09 PM: DEBUG: connectionpool.py:_new_conn Line:206 Starting new HTTP connection (1): ngn.rmlconnect.net:80 
-Wed 09/11/2019 12:12:10 PM: DEBUG: connectionpool.py:_make_request Line:396 http://ngn.rmlconnect.net:80 "GET /bulksms/bulksms?username=Hmaxtech&password=heHRlY2g&source=HMAX&destination=2348189931773,2348061145193&type=1&message=hello&dlr=1 HTTP/1.1" 200 111 
