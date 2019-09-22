@@ -29,6 +29,7 @@ def entry(request):
 
         required_keys = ['token', 'sender', 'message', 'to', 'type', 'dlr']
         received_key = []
+        response = {}
 
         # valid indidual key
         #### check keys with empty values ####
@@ -75,7 +76,9 @@ def entry(request):
         if user_balance > msg_estimated_cost:
             sms.send()
         else:
-            return JsonResponse({'error': "Insuffient Account Balance."})
+            response["error_code"]=1101
+            response["error_message"]="Insuffient Account Balance."
+            return JsonResponse(response)
         ### SEND MESSAGE ###
 
         print("cost: {} pages: {} total Numbers: {}".format(
@@ -123,6 +126,47 @@ def UserAuth(request):
 
     else:
         raise Http404()
+
+
+@csrf_exempt
+def BalanceCheck(request):
+    if request.method == "POST":
+        _token = request.POST.get("token", False)
+
+        if _token:
+            try:
+                token = AuthToken.objects.get(token=_token, is_active=True)
+                account = Account.objects.get(user=token.user)
+                balance = round(account.balance, 2)
+                response = {
+                    "ok": True,
+                    "balance": balance
+                }
+
+                return JsonResponse(response)
+
+            except AuthToken.DoesNotExist:
+                response = {
+                    "ok": False,
+                    "error_code": 105,
+                    "error_message": "Invalid Token."
+                }
+
+                return JsonResponse(response)
+        else:
+            response = {
+                "ok": False,
+                "error_code": 105,
+                "error_message": "Token is Missing."
+            }
+
+            return JsonResponse(response)
+
+    else:
+        raise Http404()
+
+
+
 
 
 def account_balance(user=None):
