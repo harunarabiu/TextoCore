@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     'account',
     'api',
+    'pricing',
 ]
 
 MIDDLEWARE = [
@@ -123,6 +124,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+AUTH_USER_MODEL = 'account.User'
 
 EMAIL_HOST = os.environ.get('AWS_SES_HOST')
 # "postmaster@sandbox9c88ec3096984f9e877105aeeb28877c.mailgun.org"

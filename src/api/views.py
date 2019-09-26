@@ -6,7 +6,6 @@ import requests
 from django.utils.datastructures import MultiValueDictKeyError
 from requests.exceptions import ConnectionError
 
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
 from django.shortcuts import render, HttpResponse, HttpResponse, Http404
@@ -15,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.conf import settings
 from .models import Message, Response
-from account.models import Account, AuthToken
+from account.models import Account, AuthToken, User
 
 
 # Create your views here.

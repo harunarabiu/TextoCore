@@ -16,6 +16,7 @@ class Message(models.Model):
     msg_status = models.CharField(max_length=11, default="SENT")
     msg_channel = models.CharField(max_length=11, default="API")
     msg_type = models.CharField(max_length=11, default="TEXT")
+    is_scheduled = models.BooleanField(default=False)
     msg_schedule = models.CharField(max_length=255, blank=True)
     msg_cost = models.FloatField()
 
