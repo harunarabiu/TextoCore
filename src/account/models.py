@@ -10,7 +10,7 @@ from django.dispatch import receiver
 
 #token = get_random_string(length=32)
 # Create your models here.
-User = settings.AUTH_USER_MODEL
+#User = settings.AUTH_USER_MODEL
 
 
 class UserManager(BaseUserManager):
@@ -115,7 +115,8 @@ class Account(models.Model):
     book_balance = models.FloatField(default=0)
     balance = models.FloatField(default=0.0)
     phone = models.CharField(max_length=13, blank=True)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return str(self.user.email)
@@ -138,8 +139,8 @@ def create_Account(sender, instance, created, *args, **kwargs):
     if created:
         try:
             Account.objects.create(user=instance)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
 
 @receiver(post_save, sender=User)

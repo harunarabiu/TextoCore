@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.conf import settings
 from .models import Message, Response
-from account.models import Account, AuthToken, User
+from account.models import Account, AuthToken, User, Country
 
 
 # Create your views here.
@@ -119,6 +119,91 @@ def UserAuth(request):
                 "ok": False,
                 "error_code": 105,
                 "error_message": "Username or Password is Missing."
+            }
+
+            return JsonResponse(response)
+
+    else:
+        raise Http404()
+
+
+@csrf_exempt
+def NewAccount(request):
+    if request.method == "POST":
+        
+        required_keys = ['first_name', 'last_name', 'email', 'password', 'phone', 'country']
+        received_key = []
+        response = {}
+
+        # valid indidual key
+        #### check keys with empty values ####
+        for key, value in request.GET.items():
+            if key in required_keys and value == '':
+                return JsonResponse({key: 700})
+            else:
+                pass
+
+            received_key.append(key)
+
+        #### check missing key #####
+        missing_keys = set(required_keys).difference(received_key)
+
+        if missing_keys is set():
+            return JsonResponse({
+                'ok': False,
+                'error': 100,
+                'error_msg': str(missing_keys) + " is required."
+                })
+        
+        email = request.POST.get("email", False)
+        password = request.POST.get("password", False)
+        first_name = request.POST.get("first_name", False)
+        last_name = request.POST.get("last_name", False)
+        phone = request.POST.get("phone", False)
+        _country = request.POST.get("country", False)
+        country = Country.objects.get(name=_country)
+        #Create User
+
+        try:
+
+            new_user = User.objects.create(
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name
+                    )
+            new_user.save()
+
+            if not Account.objects.filter(user=new_user):
+                account = Account.objects.create(
+                    user=new_user,
+                    phone=phone,
+                    country=country
+                )
+            else:
+                account = Account.objects.get(user=new_user)
+                account.phone=phone
+                account.country=country
+                account.save()
+
+
+            print(new_user)
+
+            response = {
+                "ok": True,
+                "error_code": None,
+                "error_message": None
+            }
+
+            return JsonResponse(response)
+
+        except Exception as e:
+            print(e)
+
+            response = {
+                "ok": False,
+                "error_code": 105,
+                "error_message": "Token is Missing."
             }
 
             return JsonResponse(response)
