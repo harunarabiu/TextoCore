@@ -30,6 +30,20 @@ class AuthToken(models.Model):
         return self.token
 
 
+class Country(models.Model):
+    name = models.CharField(max_length=125, unique=True)
+    CCC = models.CharField(max_length=30, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
+
+    class Meta:
+        verbose_name_plural = 'Countries'
+
+    def __str__(self):
+        return str(self.name)
+
+
 ### Signals ###
 
 @receiver(post_save, sender=User)
