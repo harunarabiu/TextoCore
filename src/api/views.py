@@ -43,8 +43,13 @@ def entry(request):
         #### check missing key #####
         missing_keys = set(required_keys).difference(received_key)
 
-        if missing_keys is set():
-            return JsonResponse({'missing': str(missing_keys)})
+        if missing_keys != set():
+            print(missing_keys)
+            return JsonResponse({
+                'ok': False,
+                'error_code': 1101,
+                'error_msg': 'All fields are required.'
+            })
         else:
             logging.info('all keys are valid')
 
@@ -60,11 +65,11 @@ def entry(request):
         except AuthToken.DoesNotExist:
             return JsonResponse({'error': "Invalid Token"})
 
-        sender = request.GET['sender']
-        message = request.GET['message']
-        to = request.GET['to']
-        msg_type = request.GET['type']
-        dlr = request.GET['dlr']
+        sender = request.GET.get('sender', False)
+        message = request.GET.get('message', False)
+        to = request.GET.get('to', False)
+        msg_type = request.GET.get('type', False)
+        dlr = request.GET.get('dlr', False)
 
         sms = SMS(user=token.user, sender=sender, recipients=to,
                   message=message, msg_type=msg_type)
@@ -75,8 +80,8 @@ def entry(request):
         if user_balance > msg_estimated_cost:
             sms.send()
         else:
-            response["error_code"]=1101
-            response["error_message"]="Insuffient Account Balance."
+            response["error_code"] = 1101
+            response["error_message"] = "Insuffient Account Balance."
             return JsonResponse(response)
         ### SEND MESSAGE ###
 
@@ -130,14 +135,17 @@ def UserAuth(request):
 @csrf_exempt
 def NewAccount(request):
     if request.method == "POST":
-        
-        required_keys = ['first_name', 'last_name', 'email', 'password', 'phone', 'country']
+
+        required_keys = ['first_name', 'last_name',
+                         'email', 'password', 'phone', 'country']
         received_key = []
         response = {}
 
         # valid indidual key
         #### check keys with empty values ####
-        for key, value in request.GET.items():
+        for key, value in request.POST.items():
+            print(request.POST)
+
             if key in required_keys and value == '':
                 return JsonResponse({key: 700})
             else:
@@ -148,13 +156,18 @@ def NewAccount(request):
         #### check missing key #####
         missing_keys = set(required_keys).difference(received_key)
 
-        if missing_keys is set():
+        if missing_keys != set():
+            for item in missing_keys:
+                print(item)
+
             return JsonResponse({
                 'ok': False,
                 'error': 100,
-                'error_msg': str(missing_keys) + " is required."
-                })
-        
+                'error_msg': "All fields are required."
+            })
+        else:
+            print("all keys are valid")
+
         email = request.POST.get("email", False)
         password = request.POST.get("password", False)
         first_name = request.POST.get("first_name", False)
@@ -162,40 +175,40 @@ def NewAccount(request):
         phone = request.POST.get("phone", False)
         _country = request.POST.get("country", False)
         country = Country.objects.get(name=_country)
-        #Create User
+        # Create User
 
         try:
 
-            new_user = User.objects.create(
-                    email=email,
-                    password=password,
-                    first_name=first_name,
-                    last_name=last_name
-                    )
-            new_user.save()
+            return JsonResponse({"message": "created"})
+            # new_user = User.objects.create(
+            #     email=email,
+            #     password=password,
+            #     first_name=first_name,
+            #     last_name=last_name
+            # )
+            # new_user.save()
 
-            if not Account.objects.filter(user=new_user):
-                account = Account.objects.create(
-                    user=new_user,
-                    phone=phone,
-                    country=country
-                )
-            else:
-                account = Account.objects.get(user=new_user)
-                account.phone=phone
-                account.country=country
-                account.save()
+            # if not Account.objects.filter(user=new_user):
+            #     account = Account.objects.create(
+            #         user=new_user,
+            #         phone=phone,
+            #         country=country
+            #     )
+            # else:
+            #     account = Account.objects.get(user=new_user)
+            #     account.phone = phone
+            #     account.country = country
+            #     account.save()
 
+            # print(new_user)
 
-            print(new_user)
+            # response = {
+            #     "ok": True,
+            #     "error_code": None,
+            #     "error_message": None
+            # }
 
-            response = {
-                "ok": True,
-                "error_code": None,
-                "error_message": None
-            }
-
-            return JsonResponse(response)
+            # return JsonResponse(response)
 
         except Exception as e:
             print(e)
@@ -248,9 +261,6 @@ def BalanceCheck(request):
 
     else:
         raise Http404()
-
-
-
 
 
 def account_balance(user=None):

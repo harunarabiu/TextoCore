@@ -18,7 +18,7 @@ from django.urls import path, include
 from .views import entry, UserAuth, BalanceCheck, NewAccount
 
 urlpatterns = [
-    path('', entry, name="entry"),
+    path('sms/send/', entry, name="entry"),
     path('account/auth/', UserAuth, name="uauth"),
     path('account/balance/', BalanceCheck, name="balancecheck"),
     path('account/new/', NewAccount, name="newaccount"),
