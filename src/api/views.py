@@ -313,9 +313,37 @@ def deduct_unit(user=None, unit=0):
     except Account.DoesNotExist:
         print("couldn't get Account")
 
-def phone_verification(user=None):
+
+#TODO: Create a function to initialise Email and Phone Verification
+def send_email_verification(email=None):
+    #TODO: Generate verifcation code
+
+    #TODO: Save Verification code to DB
+
+    #TODO: send verification code to email
+
+    pass
+
+
+def send_phone_verification(phone=None):
     if phone:
-        
+        #TODO: Generate verificaton code
+
+        #TODO: Send Verification code via SMS
+
+        #TODO: Save verification Details to DB
+
+        text = "Your 
+
+#TODO: create a function to valid verification code
+
+def phone_verification_Validation(phone=None, code=None):
+    
+    pass
+
+def email_verification_validation(email=None, code=None):
+
+    pass
 
 
 class SMS():
