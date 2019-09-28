@@ -131,6 +131,15 @@ class AuthToken(models.Model):
     def __str__(self):
         return self.token
 
+class Verification(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone = models.BooleanField(default=False)
+    phone_token = models.BooleanField(default=False)
+    email = models.BooleanField(default=False)
+    email_token = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
+
 
 ### Signals ###
 

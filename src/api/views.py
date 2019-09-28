@@ -168,6 +168,9 @@ def NewAccount(request):
         else:
             print("all keys are valid")
 
+
+        
+
         email = request.POST.get("email", False)
         password = request.POST.get("password", False)
         first_name = request.POST.get("first_name", False)
@@ -175,40 +178,55 @@ def NewAccount(request):
         phone = request.POST.get("phone", False)
         _country = request.POST.get("country", False)
         country = Country.objects.get(name=_country)
+
+        try:
+            user_exist = User.objects.get(email=email)
+            
+            response = {
+                "ok": False,
+                "error_code": 1101,
+                "error_message": "Email is already Registered."
+            }
+
+            return JsonResponse(response)
+
+        except User.DoesNotExist:
+            user_exist = None
+
         # Create User
 
         try:
 
-            return JsonResponse({"message": "created"})
-            # new_user = User.objects.create(
-            #     email=email,
-            #     password=password,
-            #     first_name=first_name,
-            #     last_name=last_name
-            # )
-            # new_user.save()
+            new_user = User.objects.create_user(
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name
+            )
+            new_user.save()
 
-            # if not Account.objects.filter(user=new_user):
-            #     account = Account.objects.create(
-            #         user=new_user,
-            #         phone=phone,
-            #         country=country
-            #     )
-            # else:
-            #     account = Account.objects.get(user=new_user)
-            #     account.phone = phone
-            #     account.country = country
-            #     account.save()
+            if Account.objects.filter(user=new_user) is None:
+                account = Account.objects.create(
+                    user=new_user,
+                    phone=phone,
+                    country=country
+                )
 
-            # print(new_user)
+            else:
+                account = Account.objects.get(user=new_user)
+                account.phone = phone
+                account.country = country
+                account.save()
 
-            # response = {
-            #     "ok": True,
-            #     "error_code": None,
-            #     "error_message": None
-            # }
+            print(new_user)
 
-            # return JsonResponse(response)
+            response = {
+                "ok": True,
+                "error_code": None,
+                "error_message": None
+            }
+
+            return JsonResponse(response)
 
         except Exception as e:
             print(e)
@@ -294,6 +312,10 @@ def deduct_unit(user=None, unit=0):
 
     except Account.DoesNotExist:
         print("couldn't get Account")
+
+def phone_verification(user=None):
+    if phone:
+        
 
 
 class SMS():
