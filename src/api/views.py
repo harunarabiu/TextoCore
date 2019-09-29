@@ -8,13 +8,14 @@ from requests.exceptions import ConnectionError
 
 from django.contrib.auth import authenticate
 
-from django.shortcuts import render, HttpResponse, HttpResponse, Http404
+from django.shortcuts import render, HttpResponse, HttpResponse, Http404, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.crypto import get_random_string
 
 from django.http import JsonResponse
 from django.conf import settings
 from .models import Message, Response
-from account.models import Account, AuthToken, User, Country
+from account.models import Account, AuthToken, User, Country, Verification
 
 
 # Create your views here.
@@ -315,10 +316,12 @@ def deduct_unit(user=None, unit=0):
 
 
 #TODO: Create a function to initialise Email and Phone Verification
-def send_email_verification(email=None):
+def send_email_verification(user=None, email=None):
     #TODO: Generate verifcation code
-
+    token = get_random_string(length=32)
     #TODO: Save Verification code to DB
+    
+    Verification.objects.create(user=user, email_token=token)
 
     #TODO: send verification code to email
 
@@ -328,22 +331,37 @@ def send_email_verification(email=None):
 def send_phone_verification(phone=None):
     if phone:
         #TODO: Generate verificaton code
+        token = get_random_string(6, '0123456789')
 
+        phone = format_phone(country, phone)
         #TODO: Send Verification code via SMS
+
 
         #TODO: Save verification Details to DB
 
-        text = "Your 
+        text = f'Texto: Use {token} to verify your phone number'
 
 #TODO: create a function to valid verification code
 
 def phone_verification_Validation(phone=None, code=None):
-    
+
     pass
 
 def email_verification_validation(email=None, code=None):
 
     pass
+
+def format_phone(country=None, phone=phone):
+    try:
+        country = Country.objects.get(name=country)
+        if phone >= 11:
+            phone = phone[1:]
+
+        return f'{country.ccc}{phone}'
+
+    except Country.DoesNotExist:
+        pass
+
 
 
 class SMS():
