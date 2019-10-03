@@ -131,17 +131,19 @@ class AuthToken(models.Model):
     def __str__(self):
         return self.token
 
+
 class Verification(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.BooleanField(default=False)
-    phone_token = models.BooleanField(default=False)
+    phone_token = models.CharField(max_length=255)
     email = models.BooleanField(default=False)
-    email_token = models.BooleanField(default=False)
+    email_token = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
 
 
 ### Signals ###
+
 
 @receiver(post_save, sender=User)
 def create_Account(sender, instance, created, *args, **kwargs):
@@ -160,3 +162,21 @@ def genarate_user_token(sender, instance, created, *args, **kwargs):
             AuthToken.objects.create(user=instance, token=token)
         except:
             pass
+
+
+@receiver(post_save, sender=User)
+def create_Verification(sender, instance, created, *args, **kwargs):
+    if created:
+        try:
+            phone_token = get_random_string(length=6, allowed_chars='0123456789')
+            email_token = get_random_string(length=35)
+            Verification.objects.create(
+                user=instance, phone_token=phone_token, email_token=email_token)
+        except Exception as e:
+            print(e)
+
+
+@receiver(pre_save, sender=User)
+def create_Verification(sender, instance, *args, **kwargs):
+    #TODO: get changes from email and phone
+    pass
