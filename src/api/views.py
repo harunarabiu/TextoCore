@@ -176,9 +176,10 @@ def NewAccount(request):
         password = request.POST.get("password", False)
         first_name = request.POST.get("first_name", False)
         last_name = request.POST.get("last_name", False)
-        phone = request.POST.get("phone", False)
+        _phone = request.POST.get("phone", False)
         _country = request.POST.get("country", False)
         country = Country.objects.get(name=_country)
+        phone = format_phone(phone=_phone)
 
         try:
             user_exist = User.objects.get(email=email)
@@ -198,7 +199,7 @@ def NewAccount(request):
 
         try:
 
-            new_user = User.objects.create_user(
+            new_user = User.objects.create(
                 email=email,
                 password=password,
                 first_name=first_name,
@@ -235,7 +236,7 @@ def NewAccount(request):
             response = {
                 "ok": False,
                 "error_code": 105,
-                "error_message": "Token is Missing."
+                "error_message": "Can't create User."
             }
 
             return JsonResponse(response)
@@ -351,7 +352,7 @@ def email_verification_validation(email=None, code=None):
 
     pass
 
-def format_phone(country=None, phone=phone):
+def format_phone(country=None, phone=None):
     try:
         country = Country.objects.get(name=country)
         if phone >= 11:
@@ -360,7 +361,7 @@ def format_phone(country=None, phone=phone):
         return f'{country.ccc}{phone}'
 
     except Country.DoesNotExist:
-        pass
+        return phone
 
 
 

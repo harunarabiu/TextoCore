@@ -5,7 +5,7 @@ from django.contrib.auth.models import (
 )
 from django.conf import settings
 from django.utils.crypto import get_random_string
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 #token = get_random_string(length=32)
@@ -168,15 +168,36 @@ def genarate_user_token(sender, instance, created, *args, **kwargs):
 def create_Verification(sender, instance, created, *args, **kwargs):
     if created:
         try:
-            phone_token = get_random_string(length=6, allowed_chars='0123456789')
+            phone_token = get_random_string(
+                length=6, allowed_chars='0123456789')
             email_token = get_random_string(length=35)
+            print('verification created')
             Verification.objects.create(
                 user=instance, phone_token=phone_token, email_token=email_token)
         except Exception as e:
             print(e)
 
 
-@receiver(pre_save, sender=User)
-def create_Verification(sender, instance, *args, **kwargs):
-    #TODO: get changes from email and phone
-    pass
+@receiver(pre_save, sender=Account)
+def update_Verification(sender, instance, *args, **kwargs):
+    # TODO: get changes from email and phone
+    print("pre_save")
+
+    try:
+        account = Account.objects.get(user=instance.id)
+        phone = account.phone
+
+        if phone is not instance.phone:
+            phone_token = get_random_string(
+                length=6, allowed_chars='0123456789')
+
+            verification = Verification.objects.get(user=instance.user)
+            verification.phone = False
+            phone_token = get_random_string(
+                length=6, allowed_chars='0123456789')
+
+            verification.phone_token = phone_token
+            verification.save()
+
+    except Exception as e:
+        print(e)
