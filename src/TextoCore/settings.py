@@ -132,6 +132,17 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
+#STATIC_ROOT = os.path.join(BASE_DIR, 'static-files')
+
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'assets')
+]
+
+
 AUTH_USER_MODEL = 'account.User'
 
 EMAIL_HOST = os.environ.get('AWS_SES_HOST')
