@@ -181,7 +181,6 @@ def create_Verification(sender, instance, created, *args, **kwargs):
 @receiver(pre_save, sender=Account)
 def update_Verification(sender, instance, *args, **kwargs):
     # TODO: get changes from email and phone
-    print("pre_save")
 
     try:
         account = Account.objects.get(user=instance.id)

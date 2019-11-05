@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Account, AuthToken, User, Country
+from .models import Account, AuthToken, User, Country, Verification
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import Group
@@ -54,8 +54,14 @@ class CountryAdmin(admin.ModelAdmin):
     search_fields = ['name', 'CCC']
 
 
+class VerificationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone', 'phone_token', 'email', 'email_token')
+    search_fields = ['phone_token', 'email_token']
+
+
 admin.site.register(Account, AccountAdmin)
 admin.site.register(AuthToken, AuthTokenAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(Country, CountryAdmin)
+admin.site.register(Verification, VerificationAdmin)
 admin.site.unregister(Group)

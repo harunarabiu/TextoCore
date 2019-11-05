@@ -101,9 +101,10 @@ def UserAuth(request):
         password = request.POST.get("password", False)
 
         if username and password:
-            user = authenticate(username=username, password=password)
+            user = User.objects.get(email=username, password=password)
 
-            if user is not None:
+
+            if user:
                 account = AuthToken.objects.get(user=user, is_active=True)
                 token = account.token
                 response = {
@@ -179,7 +180,7 @@ def NewAccount(request):
         _phone = request.POST.get("phone", False)
         _country = request.POST.get("country", False)
         country = Country.objects.get(name=_country)
-        phone = format_phone(phone=_phone)
+        phone = format_phone(country=_country, phone=_phone)
 
         try:
             user_exist = User.objects.get(email=email)
@@ -355,10 +356,10 @@ def email_verification_validation(email=None, code=None):
 def format_phone(country=None, phone=None):
     try:
         country = Country.objects.get(name=country)
-        if phone >= 11:
+        if len(phone) >= 11:
             phone = phone[1:]
 
-        return f'{country.ccc}{phone}'
+        return f'{country.CCC}{phone}'
 
     except Country.DoesNotExist:
         return phone
