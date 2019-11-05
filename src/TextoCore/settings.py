@@ -26,7 +26,7 @@ SECRET_KEY = 'sz8_@+^9a^@0)a!dake2f@-81yy^pg^4l(%in6eg#wbt4juk&r'
 # SECURITY WARNING: don't run with debug turned on in production!
 
 ENV = os.environ.get('TEXTO_ENV')
-print("Enviroment: " + ENV)
+print("Enviroment: " + str(ENV))
 if ENV == "development":
     DEBUG = True
     print("On Development Env,")
