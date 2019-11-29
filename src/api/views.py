@@ -49,7 +49,7 @@ def entry(request):
             return JsonResponse({
                 'ok': False,
                 'error_code': 1101,
-                'error_msg': 'All fields are required.'
+                'error_message': 'All fields are required.'
             })
         else:
             logging.info('all keys are valid')
@@ -108,7 +108,7 @@ def UserAuth(request):
                 response = {
                         'ok': False,
                         'error_code': 1101,
-                        'error_msg': 'Username and Password combination is incorrect.'
+                        'error_message': 'Username and Password combination is incorrect.'
                     }
                 return JsonResponse(response)
 
@@ -128,7 +128,7 @@ def UserAuth(request):
                     response = {
                         'ok': False,
                         'error_code': 1105,
-                        'error_msg': 'Not Authorised.'
+                        'error_message': 'Not Authorised.'
                     }
                     return JsonResponse(response)
             else:
@@ -183,7 +183,7 @@ def NewAccount(request):
             return JsonResponse({
                 'ok': False,
                 'error': 100,
-                'error_msg': "All fields are required."
+                'error_message': "All fields are required."
             })
         else:
             print("all keys are valid")
