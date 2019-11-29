@@ -101,7 +101,16 @@ def UserAuth(request):
         password = request.POST.get("password", False)
 
         if username and password:
-            user = User.objects.get(email=username, password=password)
+            try:
+                user = User.objects.get(email=username, password=password)
+
+            except User.DoesNotExist:
+                response = {
+                        'ok': False,
+                        'error_code': 1101,
+                        'error_msg': 'Username and Password combination is incorrect.'
+                    }
+                return JsonResponse(response)
 
 
             if user:
