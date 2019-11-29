@@ -22,7 +22,7 @@ from account.models import Account, AuthToken, User, Country, Verification
 LOW_BALANCE = 2
 USER = None
 
-
+@csrf_exempt
 def entry(request):
 
     if request.method == "GET":
@@ -105,14 +105,23 @@ def UserAuth(request):
 
 
             if user:
-                account = AuthToken.objects.get(user=user, is_active=True)
-                token = account.token
-                response = {
-                    "ok": True,
-                    "token": token
-                }
+                print(user.id,user.email)
+                try:
+                    account = AuthToken.objects.get(user=user, is_active=True)
+                    token = account.token
+                    response = {
+                        "ok": True,
+                        "token": token
+                    }
 
-                return JsonResponse(response)
+                    return JsonResponse(response)
+                except AuthToken.DoesNotExist:
+                    response = {
+                        'ok': False,
+                        'error_code': 1105,
+                        'error_msg': 'Not Authorised.'
+                    }
+                    return JsonResponse(response)
             else:
                 response = {
                     "ok": False,
