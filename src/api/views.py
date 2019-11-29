@@ -91,7 +91,7 @@ def entry(request):
         return JsonResponse(sms.FINAL_RESPONSE)
 
     else:
-        return Http404()
+        raise Http404()
 
 
 @csrf_exempt
@@ -462,7 +462,10 @@ class SMS():
                 """
 
         except ConnectionError:
+            print("error: Can't Connect to GateAway")
             raise Exception("error: Can't Connect to GateAway")
+        except Exception as e:
+            print(e)
 
     def handle_bulk_response(self):
         """
