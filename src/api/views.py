@@ -6,7 +6,8 @@ import requests
 from django.utils.datastructures import MultiValueDictKeyError
 from requests.exceptions import ConnectionError
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
+
 
 from django.shortcuts import render, HttpResponse, HttpResponse, Http404, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -17,6 +18,8 @@ from django.conf import settings
 from .models import Message, Response
 from account.models import Account, AuthToken, User, Country, Verification
 
+# User = get_user_model()
+
 
 # Create your views here.
 LOW_BALANCE = 2
@@ -24,12 +27,11 @@ USER = None
 
 @csrf_exempt
 def entry(request):
+    required_keys = ['token', 'sender', 'message', 'to', 'type', 'dlr']
+    received_key = []
+    response = {}
 
     if request.method == "GET":
-
-        required_keys = ['token', 'sender', 'message', 'to', 'type', 'dlr']
-        received_key = []
-        response = {}
 
         # valid indidual key
         #### check keys with empty values ####
@@ -56,7 +58,7 @@ def entry(request):
 
         ### AUTHENTICATE TOKEN && CHECK BALANCE###
         try:
-            _token = request.GET['token']
+            _token = request.GET.get('token', False)
             token = AuthToken.objects.get(token=_token)
             if not token.is_active:
                 return JsonResponse({'error': "Invalid Token"})
@@ -72,26 +74,47 @@ def entry(request):
         msg_type = request.GET.get('type', False)
         dlr = request.GET.get('dlr', False)
 
-        sms = SMS(user=token.user, sender=sender, recipients=to,
-                  message=message, msg_type=msg_type)
 
-        ### CHECK BALANCE ###
-        msg_estimated_cost = sms.cost()
-        user_balance = account_balance(user=sms.USER)
-        if user_balance > msg_estimated_cost:
-            sms.send()
-        else:
-            response["error_code"] = 1101
-            response["error_message"] = "Insuffient Account Balance."
-            return JsonResponse(response)
-        ### SEND MESSAGE ###
+    elif request.method == "POST":
 
-        print("cost: {} pages: {} total Numbers: {}".format(
-            sms.cost(),  sms.pages(), sms.total_sent()))
-        return JsonResponse(sms.FINAL_RESPONSE)
 
+        ### AUTHENTICATE TOKEN && CHECK BALANCE###
+        try:
+            _token = request.POST.get('token', False)
+            token = AuthToken.objects.get(token=_token)
+            if not token.is_active:
+                return JsonResponse({'error': "Invalid Token"})
+            print("Token:" + token.token)
+        except MultiValueDictKeyError:
+            return JsonResponse({'error': "Token is Missing"})
+        except AuthToken.DoesNotExist:
+            return JsonResponse({'error': "Invalid Token"})
+
+        sender = request.POST.get('sender', False)
+        message = request.POST.get('message', False)
+        to = request.POST.get('to', False)
+        msg_type = request.POST.get('type', False)
+        dlr = request.POST.get('dlr', False)
+
+    sms = SMS(user=token.user, sender=sender, recipients=to,
+                message=message, msg_type=msg_type)
+
+    ### CHECK BALANCE ###
+    msg_estimated_cost = sms.cost()
+    user_balance = account_balance(user=sms.USER)
+
+    if user_balance > msg_estimated_cost:
+        sms.send()
     else:
-        raise Http404()
+        response["error_code"] = 1101
+        response["error_message"] = "Insufficient Account Balance."
+        return JsonResponse(response)
+    ### SEND MESSAGE ###
+
+    print("cost: {} pages: {} total Numbers: {}".format(
+        sms.cost(),  sms.pages(), sms.total_sent()))
+    return JsonResponse(sms.FINAL_RESPONSE)
+        
 
 
 @csrf_exempt
@@ -101,6 +124,8 @@ def UserAuth(request):
         password = request.POST.get("password", False)
 
         if username and password:
+            auth = authenticate(request, email=username, password=password)
+            print(auth, auth.id)
             try:
                 user = User.objects.get(email=username, password=password)
 
@@ -220,10 +245,10 @@ def NewAccount(request):
 
             new_user = User.objects.create(
                 email=email,
-                password=password,
                 first_name=first_name,
                 last_name=last_name
             )
+            new_user.set_password(password)
             new_user.save()
 
             if Account.objects.filter(user=new_user) is None:
@@ -426,6 +451,7 @@ class SMS():
             endpoint = settings.SMS_SEND_API + "source={sender}&destination={recipients}&type=1&message={message}&dlr={msg_type}".format(
                 sender=self.sender, recipients=self.recipients, message=self.message, msg_type=self.msg_type)
             query = requests.get(endpoint)
+            logging.info(endpoint)
             if query.status_code == 200:
 
                 response = query.text.strip()
@@ -525,13 +551,13 @@ class SMS():
                     self.FINAL_RESPONSE["results"].append(response_)
                     self.NUMBERS_INVALID.append(phone)
                 elif status == '1710':
-                    raise Exception("Internal error.")
+                    print("Internal error.")
                 elif status == '1025':
-                    raise Exception("Insufficient credit.")
+                    print("Insufficient credit.")
                 elif status == '1715':
-                    raise Exception("Response timeout.")
+                    print("Response timeout.")
                 elif status == '1028':
-                    raise Exception("Spam message.")
+                    print("Spam message.")
             else:
                 print(content)
 
