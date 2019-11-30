@@ -129,6 +129,7 @@ def entry(request):
     user_balance = account_balance(user=sms.USER)
 
     if user_balance > msg_estimated_cost:
+        logging.info("sending...")
         sms.send()
     else:
         response["error_code"] = 1101
