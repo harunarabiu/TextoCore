@@ -27,9 +27,11 @@ USER = None
 
 @csrf_exempt
 def entry(request):
+
     required_keys = ['token', 'sender', 'message', 'to', 'type', 'dlr']
     received_key = []
     response = {}
+    
 
     if request.method == "GET":
 
@@ -77,6 +79,29 @@ def entry(request):
 
     elif request.method == "POST":
 
+        #### check keys with empty values ####
+        for key, value in request.POST.items():
+            if key in required_keys and value == '':
+                return JsonResponse({key: 700})
+            else:
+                pass
+
+            print(key,value)
+
+            received_key.append(key)
+
+        #### check missing key #####
+        missing_keys = set(required_keys).difference(received_key)
+
+        if missing_keys != set():
+            print(missing_keys)
+            return JsonResponse({
+                'ok': False,
+                'error_code': 1101,
+                'error_message': 'All fields are required.'
+            })
+        else:
+            logging.info('all keys are valid')
 
         ### AUTHENTICATE TOKEN && CHECK BALANCE###
         try:
