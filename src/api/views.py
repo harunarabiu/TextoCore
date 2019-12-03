@@ -132,7 +132,8 @@ def entry(request):
     if user_balance > msg_estimated_cost:
         logging.info("sending...")
         sms.send()
-    else:
+    else: 
+        response["ok"] = False
         response["error_code"] = 1101
         response["error_message"] = "Insufficient Account Balance."
         return JsonResponse(response)
