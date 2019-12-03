@@ -25,13 +25,13 @@ from account.models import Account, AuthToken, User, Country, Verification
 LOW_BALANCE = 2
 USER = None
 
+
 @csrf_exempt
 def entry(request):
 
     required_keys = ['token', 'sender', 'message', 'to', 'type', 'dlr']
     received_key = []
     response = {}
-    
 
     if request.method == "GET":
 
@@ -76,7 +76,6 @@ def entry(request):
         msg_type = request.GET.get('type', False)
         dlr = request.GET.get('dlr', False)
 
-
     elif request.method == "POST":
 
         #### check keys with empty values ####
@@ -86,7 +85,7 @@ def entry(request):
             else:
                 pass
 
-            print(key,value)
+            print(key, value)
 
             received_key.append(key)
 
@@ -121,6 +120,8 @@ def entry(request):
         msg_type = request.POST.get('type', False)
         dlr = request.POST.get('dlr', False)
 
+    logging.info("sending...")
+
     sms = SMS(user=token.user, sender=sender, recipients=to,
                 message=message, msg_type=msg_type)
 
@@ -140,7 +141,6 @@ def entry(request):
     print("cost: {} pages: {} total Numbers: {}".format(
         sms.cost(),  sms.pages(), sms.total_sent()))
     return JsonResponse(sms.FINAL_RESPONSE)
-        
 
 
 @csrf_exempt
@@ -150,22 +150,9 @@ def UserAuth(request):
         password = request.POST.get("password", False)
 
         if username and password:
-            auth = authenticate(request, email=username, password=password)
-            print(auth, auth.id)
-            try:
-                user = User.objects.get(email=username, password=password)
+            user = authenticate(request, email=username, password=password)
 
-            except User.DoesNotExist:
-                response = {
-                        'ok': False,
-                        'error_code': 1101,
-                        'error_message': 'Username and Password combination is incorrect.'
-                    }
-                return JsonResponse(response)
-
-
-            if user:
-                print(user.id,user.email)
+            if user and user.is_active:
                 try:
                     account = AuthToken.objects.get(user=user, is_active=True)
                     token = account.token
@@ -386,33 +373,33 @@ def deduct_unit(user=None, unit=0):
         print("couldn't get Account")
 
 
-#TODO: Create a function to initialise Email and Phone Verification
+# TODO: Create a function to initialise Email and Phone Verification
 def send_email_verification(user=None, email=None):
-    #TODO: Generate verifcation code
+    # TODO: Generate verifcation code
     token = get_random_string(length=32)
-    #TODO: Save Verification code to DB
+    # TODO: Save Verification code to DB
     
     Verification.objects.create(user=user, email_token=token)
 
-    #TODO: send verification code to email
+    # TODO: send verification code to email
 
     pass
 
 
 def send_phone_verification(phone=None):
     if phone:
-        #TODO: Generate verificaton code
+        # TODO: Generate verificaton code
         token = get_random_string(6, '0123456789')
 
         phone = format_phone(country, phone)
-        #TODO: Send Verification code via SMS
+        # TODO: Send Verification code via SMS
 
 
-        #TODO: Save verification Details to DB
+        # TODO: Save verification Details to DB
 
         text = f'Texto: Use {token} to verify your phone number'
 
-#TODO: create a function to valid verification code
+# TODO: create a function to valid verification code
 
 def phone_verification_Validation(phone=None, code=None):
 
