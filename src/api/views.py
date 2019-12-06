@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate, get_user_model
 from django.shortcuts import render, HttpResponse, HttpResponse, Http404, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
+from django.utils.dateparse import parse_datetime 
 
 from django.http import JsonResponse
 from django.conf import settings
@@ -455,6 +456,7 @@ class SMS():
             "sender": self.sender,
             "message": self.message,
             "price": self.COST,
+            "date": "",
             "results": []
         }
 
@@ -475,6 +477,9 @@ class SMS():
                 user = User.objects.get(pk=1)
                 self.MESSAGE = Message.objects.create(msg_user=self.USER, msg_sender=self.sender, msg_destination=self.recipients,
                                                       msg_message=self.message, msg_cost=self.cost(), msg_type=self.msg_type)
+                
+                
+                self.FINAL_RESPONSE["date"] = self.format_date(self.MESSAGE.created_at)
 
                 self.handle_bulk_response()
 
@@ -603,3 +608,8 @@ class SMS():
     def total_chars(self):
         count = len(self.message)
         return int(count)
+
+    def format_date(self, date):
+        date_str = parse_datetime(str(date)).strftime("%d-%m-%Y %H:%M:%S")
+
+        return date_str
