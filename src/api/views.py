@@ -1,7 +1,7 @@
 import os
 import logging
 import requests
-
+from api.helper import format_date
 
 from django.utils.datastructures import MultiValueDictKeyError
 from requests.exceptions import ConnectionError
@@ -18,6 +18,8 @@ from django.http import JsonResponse
 from django.conf import settings
 from .models import Message, Response
 from account.models import Account, AuthToken, User, Country, Verification
+
+from api.models import Message
 
 # User = get_user_model()
 
@@ -373,6 +375,74 @@ def deduct_unit(user=None, unit=0):
 
     except Account.DoesNotExist:
         print("couldn't get Account")
+
+
+
+@csrf_exempt
+def SMSHistory(request):
+
+    if request.method == "POST":
+        _token = request.POST.get("token", False)
+
+        if _token:
+            try:
+                token = AuthToken.objects.get(token=_token)
+                Messages = Message.objects.filter(msg_user=token.user)
+
+                AllMessages = []
+
+                for message in Messages:
+                    message = {
+                        "senderid": message.msg_sender,
+                        "recipients": message.msg_destination,
+                        "message": message.msg_message,
+                        "status": message.msg_status,
+                        "type": message.msg_type,
+                        "cost": message.msg_cost,
+                        "date": format_date(date=message.created_at),
+                    }
+
+                    AllMessages.append(message)
+
+                response = {
+                    "ok": True,
+                    "messages": AllMessages
+                }
+
+                return JsonResponse(response)
+
+
+            
+            except AuthToken.DoesNotExist:
+                response = {
+                    "ok": False,
+                    "error_code": 105,
+                    "error_message": "Invalid Token"
+                }
+                
+                return JsonResponse(response)
+
+            except Message.DoesNotExist:
+                response = {
+                    "ok": True,
+                    "messages": ""
+                }
+                
+                return JsonResponse(response)
+
+        else:
+            response = {
+                "ok": False,
+                "error_code": 105,
+                "error_message": "Token is Missing"
+            }
+            
+            return JsonResponse(response)
+
+    else:
+        return Http404()
+
+        
 
 
 # TODO: Create a function to initialise Email and Phone Verification

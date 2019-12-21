@@ -5,7 +5,7 @@
 * API: include id in response
 * API: single  message
 * API: send reply add Date
-
+* round cost to 2 decimal places
 
 
 
