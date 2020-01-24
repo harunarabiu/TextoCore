@@ -444,6 +444,17 @@ def SMSHistory(request):
 
         
 
+def send_otp():
+    pass
+
+def verify_otp():
+
+    pass
+
+def retry_otp():
+    
+    pass
+
 
 # TODO: Create a function to initialise Email and Phone Verification
 def send_email_verification(user=None, email=None):

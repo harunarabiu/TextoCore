@@ -16,3 +16,12 @@
 * handle internet connection
 * Count Message Text
 * add country field registration
+
+
+* Select All contacts
+* Resend action in SMS History
+* Resend to same contact in
+* OTP
+* PUSH notifications
+* Customer Support
+* Transactions History

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'account',
     'api',
     'pricing',
+    'otp',
 ]
 
 MIDDLEWARE = [
