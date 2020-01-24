@@ -30,7 +30,7 @@ class OTP():
 
             print(self.user)
             Otp.objects.create(
-                user=self.user, phone=self.phone, otp=self.token, expiry=self.otp_expiry)
+                user=self.user, phone=self.phone, otp=self.new_otp, expiry=self.otp_expiry)
 
             return True
         else:
