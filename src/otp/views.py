@@ -59,34 +59,32 @@ def send_otp(request):
 
 
 @csrf_exempt
-def verify_otp(request):
+def resend_otp(request):
 
     if request.method == "POST":
         phone = request.POST.get('phone', False)
         token = request.POST.get('token', False)
-        otp_code = request.POST.get('otp', False)
-        print("here here here")
-        if phone and token and otp_code:
-            print("here here here")
+
+        if phone and token:
+
             try:
                 token = AuthToken.objects.get(token=token, is_active=True)
                 if not token.is_active:
-                    print("Token:" + token.token)
                     return JsonResponse({
                         'ok': False,
                         'error_message': "Token is Disabled"
                     })
                 else:
-                    otp = OTP(user=None, phone=phone, otp_code=otp_code, )
-                    if otp.verify():
+                    otp = OTP(user=token.user, phone=phone, retry=True)
+                    if otp.retry():
                         return JsonResponse({
                             'ok': True,
-                            'error_message': "OTP verification Successfully."
+                            'error_message': "OTP resend successfully."
                         })
                     else:
                         return JsonResponse({
                             'ok': False,
-                            'error_message': "wrong OTP."
+                            'error_message': "OTP resend Failed."
                         })
 
             except AuthToken.DoesNotExist:
@@ -105,7 +103,49 @@ def verify_otp(request):
             'ok': True,
         })
 
+@csrf_exempt
+def verify_otp(request):
 
-def retry_otp():
+    if request.method == "POST":
+        phone = request.POST.get('phone', False)
+        token = request.POST.get('token', False)
+        otp_code = request.POST.get('otp', False)
+        print("here here here")
+        if phone and token and otp_code:
+            print("here here here")
+            try:
+                token = AuthToken.objects.get(token=token, is_active=True)
+                if not token.is_active:
+                    print("Token:" + token.token)
+                    return JsonResponse({
+                        'ok': False,
+                        'error_message': "Token is Disabled"
+                    })
+                else:
+                    otp = OTP(user=token.user, phone=phone, otp_code=otp_code, )
+                    if otp.verify():
+                        return JsonResponse({
+                            'ok': True,
+                            'error_message': "OTP verification Successfully."
+                        })
+                    else:
+                        return JsonResponse({
+                            'ok': False,
+                            'error_message': "Wrong  OTP."
+                        })
 
-    pass
+            except AuthToken.DoesNotExist:
+
+                return JsonResponse({
+                    'ok': False,
+                    'error_message': "Invalid Token"
+                })
+        else:
+            return JsonResponse({
+                'ok': False,
+                'error_message': "All fields are required."
+            })
+    else:
+        return JsonResponse({
+            'ok': True,
+        })

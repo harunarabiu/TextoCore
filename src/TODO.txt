@@ -25,3 +25,6 @@
 * PUSH notifications
 * Customer Support
 * Transactions History
+* Save Message as Template
+* Save Receipient as Group
+* 

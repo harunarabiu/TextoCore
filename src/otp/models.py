@@ -17,3 +17,14 @@ class Otp(models.Model):
     expired = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
+
+
+class OtpTemplate(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    senderid = models.CharField(max_length=255)
+    otp_length = models.IntegerField(default=4)
+    text = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
+
+
