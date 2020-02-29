@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import logging
+import environ
+
+root = environ.Path(__file__) - 3  # get root of the project
+env = environ.Env()
+environ.Env.read_env()
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,16 +31,9 @@ SECRET_KEY = 'sz8_@+^9a^@0)a!dake2f@-81yy^pg^4l(%in6eg#wbt4juk&r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-ENV = os.environ.get('TEXTO_ENV')
-print("Enviroment: " + str(ENV))
-if ENV == "development":
-    DEBUG = True
-    print("On Development Env,")
-else:
-    DEBUG = False
-    print("On Production Env")
+DEBUG = env.bool('TEXTO_DEBUG', default=False)
 
-ALLOWED_HOSTS = ['*']
+print("DEBUG: " + str(DEBUG))
 
 
 # Application definition
@@ -142,21 +141,21 @@ MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'uploads')
 
 AUTH_USER_MODEL = 'account.User'
 
-EMAIL_HOST = os.environ.get('AWS_SES_HOST')
+EMAIL_HOST = env.str('AWS_SES_HOST')
 # "postmaster@sandbox9c88ec3096984f9e877105aeeb28877c.mailgun.org"
 
-EMAIL_HOST_USER = os.environ.get('AWS_SES_USERNAME')
+EMAIL_HOST_USER = env.str('AWS_SES_USERNAME')
 # "e75a529a3f87570f3d77ab9ac3319ff5-49a2671e-6400a9b7"
-EMAIL_HOST_PASSWORD = os.environ.get('AWS_SES_PASSWORD')
+EMAIL_HOST_PASSWORD = env.str('AWS_SES_PASSWORD')
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = "noreply@alert.texto.com.ng"
 
-SMS_SEND_ENPOINT = os.environ.get('SMS_SEND_ENPOINT')
-SMS_BALANCE_ENPOINT = os.environ.get('SMS_BALANCE_ENPOINT')
-SMS_RATE_ENPOINT = os.environ.get('SMS_RATE_ENPOINT')
-SMS_USERNAME = os.environ.get('SMS_USERNAME')
-SMS_PASSWORD = os.environ.get('SMS_PASSWORD')
+SMS_SEND_ENPOINT = env.str('SMS_SEND_ENPOINT')
+SMS_BALANCE_ENPOINT = env.str('SMS_BALANCE_ENPOINT')
+SMS_RATE_ENPOINT = env.str('SMS_RATE_ENPOINT')
+SMS_USERNAME = env.str('SMS_USERNAME')
+SMS_PASSWORD = env.str('SMS_PASSWORD')
 
 SMS_RATE_API = ("{}?user={}&password={}").format(
     SMS_RATE_ENPOINT, SMS_USERNAME, SMS_PASSWORD)

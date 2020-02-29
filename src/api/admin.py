@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Message, Response
+from .models import Message, Response, DeliveryReport
 # Register your models here.
 
 
@@ -13,9 +13,17 @@ class MessageAdmin(admin.ModelAdmin):
 
 class ResponseAdmin(admin.ModelAdmin):
     list_display = ('message', 'phone_number', 'msg_id', 'response_code')
-    list_filter = ('message', 'phone_number', 'msg_id', 'response_code')
+    list_filter = ['response_code']
+    search_fields = ['phone_number']
+
+
+class DeliveryReportAdmin(admin.ModelAdmin):
+    list_display = ('message', 'phone_number', 'msg_id', 'response_code',
+                    'status', 'cost_sms', 'charge', 'MCC_MNC', 'error_code', 'tag_name')
+    list_filter = ['response_code']
     search_fields = ['phone_number']
 
 
 admin.site.register(Message, MessageAdmin)
 admin.site.register(Response, ResponseAdmin)
+admin.site.register(DeliveryReport, DeliveryReportAdmin)
