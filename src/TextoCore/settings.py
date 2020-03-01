@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'api',
     'pricing',
     'otp',
+    'payment',
 ]
 
 MIDDLEWARE = [
