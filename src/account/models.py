@@ -161,7 +161,8 @@ def genarate_user_token(sender, instance, created, *args, **kwargs):
     if created:
         try:
             token = get_random_string(length=32)
-            AuthToken.objects.create(user=instance, token=token)
+            AuthToken.objects.create(
+                user=instance, token=token, is_active=True)
         except:
             pass
 
